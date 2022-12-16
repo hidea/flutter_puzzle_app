@@ -1,0 +1,207 @@
+flutterで動作する15パズルのコードを提示して。
+
+Flutterで15パズルを作成するには、以下のようなコードを書くことができます。
+
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(new FifteenPuzzle());
+}
+
+class FifteenPuzzle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new MaterialApp(
+      title: '15 Puzzle',
+      home: new GameBoard(),
+    );
+  }
+}
+
+class GameBoard extends StatefulWidget {
+  @override
+  _GameBoardState createState() => new _GameBoardState();
+}
+
+class _GameBoardState extends State<GameBoard> {
+  List<List<int>> _board;
+  int _blankRow;
+  int _blankCol;
+
+  @override
+  void initState() {
+    super.initState();
+    _board = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+      [9, 10, 11, 12],
+      [13, 14, 15, 0],
+    ];
+    _blankRow = 3;
+    _blankCol = 3;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: new AppBar(
+        title: new Text('15 Puzzle'),
+      ),
+      body: new GridView.count(
+        crossAxisCount: 4,
+        children: _buildTiles(),
+      ),
+    );
+  }
+
+  List<Widget> _buildTiles() {
+    List<Widget> tiles = [];
+
+    for (int row = 0; row < 4; row++) {
+      for (int col = 0; col < 4; col++) {
+        int number = _board[row][col];
+
+        if (number == 0) {
+          tiles.add(new Container());
+        } else {
+          tiles.add(new GestureDetector(
+            onTap: () {
+              _moveTile(row, col);
+            },
+            child: new Center(
+              child: new Text(
+                '$number',
+                style: new TextStyle(fontSize: 36.0),
+              ),
+            ),
+          ));
+        }
+      }
+    }
+
+    return tiles;
+  }
+
+  void _moveTile(int row, int col) {
+    if (_isAdjacent(row, col)) {
+      setState(() {
+        _board[row][col] = 0;
+        _board[_blankRow][_blankCol] = _board[row][col];
+        _blankRow = row;
+        _blankCol = col;
+      });
+    }
+  }
+
+  bool _isAdjacent(int row, int col) {
+    if (row == _blankRow) {
+      return (col - 1 == _blankCol) || (col + 1 == _blankCol);
+    } else if (col == _blankCol) {
+      return (row - 1 == _blankRow) || (row + 1 == _blankRow);
+    }
+
+    return false;
+  }
+}
+
+このコードは、15パズル画面には、15のタイルが配置された4x4のゲームボードが表示されます。各タイルは、数字が書かれたボタンのように表示され、ユーザーがタップすることで移動することができます。
+
+ユーザーがタイルを移動させると、そのタイルと空白のタイルが交換されます。これを繰り返し、15のタイルを正しい順序で並べることで、15パズルが完成します。
+
+このコードは、15パズルのゲームを作成するための基本的な例です。必要に応じて、ゲームルールや実装をカスタマイズすることができます。例えば、ゲームをスタートするときに、15のタイルをランダムに配置するようにすることで、毎回異なるゲームをプレイできるようにしたり、ゲームを完成させるまでの移動回数や所要時間を記録するようにしたりすることができます。
+
+_moveTileの挙動が間違っていませんか？
+
+_moveTileメソッドでは、現在の空白のタイルの座標（_blankRow、_blankCol）を更新するだけで、実際にタイルを移動させる処理が実装されていません。このため、_moveTileメソッドを以下のように修正する必要があります。
+
+void _moveTile(int row, int col) {
+  if (_isAdjacent(row, col)) {
+    setState(() {
+      int temp = _board[row][col];
+      _board[row][col] = _board[_blankRow][_blankCol];
+      _board[_blankRow][_blankCol] = temp;
+      _blankRow = row;
+      _blankCol = col;
+    });
+  }
+}
+
+このように修正することで、_moveTileメソッドが正しく動作するようになります。また、_board変数を変更するときは必ずsetStateメソッドを呼び出す必要があることも覚えておいてください。setStateメソッドを呼び出すことで、Widgetの状態が変更されることをFlutterに通知し、画面を更新することができます。
+
+はじめにシャッフルを追加して欲しい。
+
+15パズルをより楽しめるように、最初に15のタイルをランダムに配置するようにしたいということですね。
+
+この場合、GameBoardクラスのinitStateメソッド内で、_board変数の初期値をランダムに生成するようにします。例えば、以下のように実装することができます。
+
+@override
+void initState() {
+  super.initState();
+
+  List<List<int>> tempBoard = [    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 0],
+  ];
+
+  _board = tempBoard.expand((i) => i).toList().toList();
+  _board.shuffle();
+
+  for (int row = 0; row < 4; row++) {
+    for (int col = 0; col < 4; col++) {
+      if (_board[row][col] == 0) {
+        _blankRow = row;
+        _blankCol = col;
+      }
+    }
+  }
+}
+
+このようにすることで、最初に15のタイルをランダムな順序で配置するようになります。
+
+また、各タイルを表示するときに、数字が重なったり、文字がはみ出したりしないように、タイルのサイズを調整することも推奨されます。例えば、以下のように_buildTilesメソッドを修正することで、タイルのサイズを調整することができます。
+
+List<Widget> _buildTiles() {
+  List<Widget> tiles = [];
+
+  for (int row = 0; row < 4; row++) {
+    for (int col = 0; col < 4; col++) {
+      int number = _board[row][col];
+
+      if (number == 0) {
+        tiles.add(new Container());
+      } else {
+        tiles.add(new Container(
+          decoration: new BoxDecoration(
+            border: new Border.all(
+              color: Colors.black,
+              width: 1.0,
+            ),
+          ),
+          child: new Center(
+            child: new Text(
+              '$number',
+              style: new TextStyle(fontSize: 36.0),
+            ),
+          ),
+        ));
+      }
+    }
+  }
+
+  return tiles;
+}
+
+以上のようにすることで、15パズルのゲームを作成することができます。必要に応じて、このゲームにさらなる機能を追加することができます。例えば、ゲームを完成させるまでの所要時間や移動回数を記録して、ゲームを再プレイするときに参考にするようにしたり、最高スコアを保存して、他のプレイヤーと競うようにしたりすることができます。
+
+また、Flutterには、さまざまな画面遷移やアニメーションなど、ゲーム作成に必要な機能が備わっているため、15パズルのゲームをより魅力的にすることができます。詳しくは、Flutterのドキュメントを参照してください。
+
+以上がFlutterで15パズルを作成する方法になります。他にも、Flutterを使ったゲーム作成に関する情報が必要な場合は、お気軽にお問い合わせください。
+
+完成したときにおめでとうを表示したい。
+
+network error
+
+
+
+
